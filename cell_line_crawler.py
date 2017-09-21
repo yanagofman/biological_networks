@@ -1,14 +1,15 @@
 import json
+import math
 import re
 from difflib import SequenceMatcher
 
-import math
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.wait import WebDriverWait
 
+from gene_entries import GeneEntries
 
 NUM_OF_RESULTS_RE = re.compile("\s(\d+)\sentries")
 
@@ -22,11 +23,13 @@ DEFAULT_NUM_OF_PAGE_RESULTS = 25
 
 cached_genes = dict()
 
-class GetData(object):
+
+class CellLineCrawler(object):
     def __init__(self):
         self.session = webdriver.Firefox()
         self.session.maximize_window()
         self.login()
+        self.gene_entries = GeneEntries()
 
     @staticmethod
     def similar(a, b):
@@ -63,7 +66,9 @@ class GetData(object):
         if mutation_type.text in MUTATION_TYPES:
             gene = row_columns[header_to_index_dict[GENE]]
             link = gene.find_element_by_xpath(".//a")
-            return link.text
+            gene_name = link.text
+            entry_id = self.gene_entries.get_single_gene_id(gene_name)
+            return entry_id
 
     def read_single_page_mutations_table(self):
         mutations_xpath = ".//tr[contains(@class, 'mutation')]"
@@ -73,9 +78,9 @@ class GetData(object):
             header_to_index_dict = {header.text.replace("\n", " "): i for i, header in enumerate(mutations_headers)}
             rows = self.session.find_elements_by_xpath(mutations_xpath)
             for row in rows:
-                result = self.handle_single_gene(row, header_to_index_dict)
-                if result:
-                    mutations.append(result)
+                entry_id = self.handle_single_gene(row, header_to_index_dict)
+                if entry_id:
+                    mutations.append(entry_id)
             return mutations
 
     def get_paginate_buttons(self):
@@ -157,7 +162,7 @@ class GetData(object):
 
 
 def main():
-    b = GetData()
+    b = CellLineCrawler()
     results = b.read_whole_mutations_data()
     with open("./data.json", "w") as f:
         json.dump(results, f)

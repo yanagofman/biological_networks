@@ -1,5 +1,5 @@
 import dryscrape
-from bs4 import BeautifulSoup
+
 
 class GeneEntries(object):
     def __init__(self):
@@ -10,11 +10,10 @@ class GeneEntries(object):
               ";site=ensembl;facet_species=Human;page=1;facet_feature_type=Gene" % gene_name
         self.session.visit(url)
         self.session.wait_for(lambda: self.session.at_xpath(".//div[@class='table_result']"))
-        soup = BeautifulSoup(self.session.getContent())
-        first_result = soup.find("div", {"class": "table_result"})
-        id_element = first_result.find("div", {"class": "green_data"})
-        span_element = id_element.find("span", recursive=False)
-        return span_element.getText()
+        first_result = self.session.at_xpath(".//div[@class='table_result']")
+        id_element = first_result.at_xpath(".//div[@class='green_data']")
+        span_element = id_element.at_xpath(".//span")
+        return span_element.text()
 
 
 def main():
