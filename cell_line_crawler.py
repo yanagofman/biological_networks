@@ -12,13 +12,15 @@ from selenium.webdriver.common.by import By
 
 NUM_OF_RESULTS_RE = re.compile("\s(\d+)\sentries")
 
-CELL_LINES = ['SUP-T1', 'U-937', '697', 'OCI-AML5', 'TF-1', 'HPB-ALL', 'Jurkat', 'KE-37', 'MOLT-16', 'RCH-ACV', 'SEM',
-              'TALL-1', 'NALM-6', 'NB-4', 'MOLM-13', 'HEL', 'PL-21', 'MV-4-11', 'EOL-1', 'OCI-AML2', 'OCI-AML3',
-              'P31/FUJ', 'MonoMac1', 'SKM-1', 'THP-1', 'HT',
-              'KM-H2', 'L-428', 'MC116', 'Mino', 'NU-DHL-1', 'RL', 'SU-DHL-4', 'JJN-3', 'KMS-26', 'KE-97',
-              'KMS-28BM', 'L-363', 'Reh']
+CELL_LINES = ['OCI-AML5', 'TF-1', 'NB-4', 'MOLM-13', 'HEL', 'PL-21',
+              'MV-4-11', 'EOL-1', 'OCI-AML2', 'OCI-AML3',
+              'P31/FUJ', 'MonoMac1', 'SKM-1', 'THP-1']
+MUTATION_TYPES = ['Frame_Shift_Del', 'In_Frame_Del', 'Missense_Mutation', 'Nonsense_Mutation']
+GENE = 'Gene'
+MUTATION_TYPE = 'Variant Classification'
 DEFAULT_NUM_OF_PAGE_RESULTS = 25
 
+cached_genes = dict()
 
 class GetData(object):
     def __init__(self):
@@ -55,15 +57,25 @@ class GetData(object):
             submit_button = login_div.find_element_by_xpath(".//input[contains(@src, 'sign_in')]")
             submit_button.click()
 
+    def handle_single_gene(self, row, header_to_index_dict):
+        row_columns = row.find_elements_by_xpath(".//td")
+        mutation_type = row_columns[header_to_index_dict[MUTATION_TYPE]]
+        if mutation_type.text in MUTATION_TYPES:
+            gene = row_columns[header_to_index_dict[GENE]]
+            link = gene.find_element_by_xpath(".//a")
+            return link.text
+
     def read_single_page_mutations_table(self):
         mutations_xpath = ".//tr[contains(@class, 'mutation')]"
         if self.wait_for(mutations_xpath):
             mutations = list()
+            mutations_headers = self.session.find_elements_by_xpath(".//th")
+            header_to_index_dict = {header.text.replace("\n", " "): i for i, header in enumerate(mutations_headers)}
             rows = self.session.find_elements_by_xpath(mutations_xpath)
             for row in rows:
-                first_column = row.find_element_by_xpath(".//td")
-                link = first_column.find_element_by_xpath(".//a")
-                mutations.append(link.text)
+                result = self.handle_single_gene(row, header_to_index_dict)
+                if result:
+                    mutations.append(result)
             return mutations
 
     def get_paginate_buttons(self):
