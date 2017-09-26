@@ -55,7 +55,7 @@ class RF:
             plt.savefig("RF accuracy.png")
         return [T,TP,TN,TrainAcc]
     
-    
+    #Get sizes list and make accuracies graph depended on those train sizes
     def  accurGraphs(self, sizes):
         vals = list()
         T = list()
@@ -84,7 +84,7 @@ class RF:
         plt.show()
         plt.savefig("RF accuracy graph.png")
     
-    
+    #Makes the Roc graph for classifier, using different trainsizes, each n times
     def ROC(self,sizes, n = 10):
         sizes = sorted(sizes)
         plt.figure(1)
@@ -183,7 +183,7 @@ class SVM:
             plt.savefig("SVM accuracy.png")
         return [T,TP,TN,TrainAcc]
     
-    
+    #Get sizes list and make accuracies graph depended on those train sizes
     def  accurGraphs(self, sizes):
         vals = list()
         T = list()
@@ -212,7 +212,7 @@ class SVM:
         plt.show()
         plt.savefig("SVM accuracy graph.png")
     
-    
+    #Makes the Roc graph for classifier, using different trainsizes, each n times
     def ROC(self,sizes, n = 10):
         plt.figure(1)
         plt.subplot(211)
