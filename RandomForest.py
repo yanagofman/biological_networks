@@ -33,10 +33,15 @@ class RF:
             test_labels = self.lbs[indexes[trainsize:]]
             clf.fit(train_data,train_labels)
             prediction = clf.predict(test_data)
+            corTrue = np.sum(prediction == test_labels)
             T += corTrue/testsize
-            fpr,tpr,thresh = roc_curve(testLbs,testPre,pos_label = 1)
-            TP += tpr[1]
-            TN += (1-fpr[1])
+            tpr = np.sum(prediction+test_labels == 2)
+            tnr = np.sum(prediction+test_labels==0)
+            if(tpr != 0):
+                TP += tpr/np.sum(test_labels==1)
+            if(tnr != 0):
+                TN += tnr/np.sum(test_labels==0)
+            prediction = clf.predict(train_data)
             TrainAcc += np.sum(prediction == train_labels)/trainsize
         T /= n
         TN /= n
@@ -51,8 +56,8 @@ class RF:
             plt.subplot(211)
             plt.ylabel("Percentage")
             plt.bar([0,1,2,3],[T,TP,TN,TrainAcc],tick_label=["Avarage accuracy\non test data","Avarage true positive\npercantage on test data","Avarage false positive\npercantage on test data","Avarage accuracy\non train data"])
-            plt.show()
             plt.savefig("RF accuracy.png")
+            plt.show()
         return [T,TP,TN,TrainAcc]
     
     #Get sizes list and make accuracies graph depended on those train sizes
@@ -64,8 +69,7 @@ class RF:
         Train = list()
         sizes = sorted(sizes)
         for i in sizes:
-            ret = self.accuracy((self.size*(i-1)//i),False)
-            vals += [self.size*(i-1)//i]
+            ret = self.accuracy(i,False)
             T +=[ret[0]]
             TP +=[ret[1]]
             TN += [ret[2]]
@@ -74,15 +78,14 @@ class RF:
         plt.subplot(211)
         plt.ylabel("Percentage")
         plt.xlabel("Train data set size")
-        
-        accGr, =plt.plot(vals,T,"b-",label = "Average accuracy(test)")
-        tpGr, = plt.plot(vals,TP,"g-", label = "Average true positive accuracy(test)")
-        tnGr, = plt.plot(vals,TN,"r-",label = "Average true negative accuracy(test) ")
-        trainGr, = plt.plot(vals,Train,"y-",label = "Average accuracy(train)")
+        accGr, = plt.plot(sizes,T,"b-",label = "Average accuracy(test)")
+        tpGr, = plt.plot(sizes,TP,"g-", label = "Average true positive accuracy(test)")
+        tnGr, = plt.plot(sizes,TN,"r-",label = "Average true negative accuracy(test) ")
+        trainGr, = plt.plot(sizes,Train,"y-",label = "Average accuracy(train)")
         plt.legend(handles = [accGr,tpGr,tnGr,trainGr])
-        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show()
+        plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
         plt.savefig("RF accuracy graph.png")
+        plt.show()
     
     #Makes the Roc graph for classifier, using different trainsizes, each n times
     def ROC(self,sizes, n = 10):
@@ -97,9 +100,8 @@ class RF:
         clf = RandomForestClassifier()
         indexes = list(range(self.size))
         dat = dict()
-        for i in sizes:
+        for size in sizes:
             for j in range(10):
-                size = (i-1)*self.size//i
                 np.random.shuffle(indexes)
                 clf.fit(self.dt[indexes[:size]],self.lbs[indexes[:size]])
                 testLbs=self.lbs[indexes[size:]]
@@ -116,8 +118,8 @@ class RF:
         fprs = [0]+fprs+[1]
         tprs = [0]+tprs+[1]
         plt.plot(fprs,tprs,'b-')
-        plt.show()
         plt.savefig("RF ROC.png")
+        plt.show()
         return fprs,tprs,auc(fprs,tprs)
     
     
@@ -161,10 +163,15 @@ class SVM:
             prediction = clf.predict(test_data)
             P = np.sum(test_labels == 1)
             F = np.sum(test_labels == 0)
-            corTrue= np.sum(prediction == test_labels)
-            fpr,tpr,thresh = roc_curve(testLbs,testPre,pos_label = 1)
-            TP += tpr[1]
-            TN += (1-fpr[1])
+            corTrue = np.sum(prediction == test_labels)
+            T += corTrue/testsize
+            tpr = np.sum(prediction+test_labels == 2)
+            tnr = np.sum(prediction+test_labels==0)
+            if(tpr != 0):
+                TP += tpr/np.sum(test_labels==1)
+            if(tnr != 0):
+                TN += tnr/np.sum(test_labels==0)
+            prediction = clf.predict(train_data)
             TrainAcc += np.sum(prediction == train_labels)/trainsize
         T /= n
         TN /= n
@@ -179,8 +186,8 @@ class SVM:
             plt.subplot(211)
             plt.ylabel("Percentage")
             plt.bar([0,1,2,3],[T,TP,TN,TrainAcc],tick_label=["Avarage accuracy\non test data","Avarage true positive\npercantage on test data","Avarage false positive\npercantage on test data","Avarage accuracy\non train data"])
-            plt.show()
             plt.savefig("SVM accuracy.png")
+            plt.show()
         return [T,TP,TN,TrainAcc]
     
     #Get sizes list and make accuracies graph depended on those train sizes
@@ -192,8 +199,7 @@ class SVM:
         Train = list()
         sizes = sorted(sizes)
         for i in sizes:
-            ret = self.accuracy((self.size*(i-1)//i),False)
-            vals += [self.size*(i-1)//i]
+            ret = self.accuracy(i,False)
             T +=[ret[0]]
             TP +=[ret[1]]
             TN += [ret[2]]
@@ -202,15 +208,14 @@ class SVM:
         plt.subplot(211)
         plt.ylabel("Percentage")
         plt.xlabel("Train data set size")
-        
-        accGr, =plt.plot(vals,T,"b-",label = "Average accuracy(test)")
-        tpGr, = plt.plot(vals,TP,"g-", label = "Average true positive accuracy(test)")
-        tnGr, = plt.plot(vals,TN,"r-",label = "Average true negative accuracy(test) ")
-        trainGr, = plt.plot(vals,Train,"y-",label = "Average accuracy(train)")
+        accGr, = plt.plot(sizes,T,"b-",label = "Average accuracy(test)")
+        tpGr, = plt.plot(sizes,TP,"g-", label = "Average true positive accuracy(test)")
+        tnGr, = plt.plot(sizes,TN,"r-",label = "Average true negative accuracy(test) ")
+        trainGr, = plt.plot(sizes,Train,"y-",label = "Average accuracy(train)")
         plt.legend(handles = [accGr,tpGr,tnGr,trainGr])
-        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show()
+        plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
         plt.savefig("SVM accuracy graph.png")
+        plt.show()
     
     #Makes the Roc graph for classifier, using different trainsizes, each n times
     def ROC(self,sizes, n = 10):
@@ -224,9 +229,9 @@ class SVM:
         clf = SVC(kernel = self.kernel)
         indexes = list(range(self.size))
         dat = dict()
-        for i in sizes:
+        for size in sizes:
             for j in range(10):
-                size = (i-1)*self.size//i
+                
                 np.random.shuffle(indexes)
                 clf.fit(self.dt[indexes[:size]],self.lbs[indexes[:size]])
                 testLbs=self.lbs[indexes[size:]]
@@ -243,8 +248,8 @@ class SVM:
         fprs = [0]+fprs+[1]
         tprs = [0]+tprs+[1]
         plt.plot(fprs,tprs,'b-')
-        plt.show()
         plt.savefig("SVM ROC.png")
+        plt.show()
         return fprs,tprs,auc(fprs,tprs)
     
     
