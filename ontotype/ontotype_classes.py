@@ -1,64 +1,65 @@
 import pickle
 
-class GoData:
-    def __init__(self, go, relatedGenesNumber):
-        self.go = go
-        self.relatedGenes = relatedGenesNumber
+from collections import defaultdict
 
-class Go:
-    def __init__(self, goNumber, goName):
-        self.goNumber = goNumber
-        self.goName = goName
+
+class GoData(object):
+    def __init__(self, go, related_genes_number):
+        self.go = go
+        self.related_genes = related_genes_number
+
+
+class Go(object):
+    def __init__(self, go_number, go_name):
+        self.go_number = go_number
+        self.go_name = go_name
 
     def __eq__(self, other):
-        return self.goNumber == other.goNumber
+        return self.go_number == other.go_number
 
-class Ontotype:
 
-    def __init__(self):
-        self.goDataFile = 'mart_export.txt'
-        self.initializationMapFileName = 'initializationMap.pkl'
-        self.loadInitializationMap()
+def get_non_duplicating_list(input_list):
+    output = list()
+    for x in input_list:
+        if x not in output:
+            output.append(x)
+    return output
 
-    def getGoListForGeneId(self, geneId):
-        return self.initializationMap.get(geneId)
 
-    def createGoDataMap(self, geneIdList):
-        geneIdUndouplicationsList = self.undouplicatingList(geneIdList)
-        goDataMap = dict()
-        for geneId in geneIdUndouplicationsList:
-            if geneId not in self.initializationMap:
+class Ontotype(object):
+    def __init__(self, initialization_map_file_name):
+        self.initialization_map_file_name = initialization_map_file_name
+        self.initialization_map = self.load_initialization_map()
+
+    def get_go_list_for_gene_id(self, gene_id):
+        return self.initialization_map.get(gene_id)
+
+    def create_go_data_map(self, gene_id_list):
+        gene_id_non_duplications_list = get_non_duplicating_list(gene_id_list)
+        go_data_map = defaultdict(int)
+        for gene_id in gene_id_non_duplications_list:
+            if gene_id not in self.initialization_map:
                 continue
-            goListForGene = self.getGoListForGeneId(geneId)
-            for go in goListForGene:
-                if go.goNumber in goDataMap:
-                    goDataMap[go.goNumber].relatedGenes += 1
-                else:
-                    goDataMap[go.goNumber] = GoData(go, 1)
-        self.goDataMap = goDataMap
-        return goDataMap
+            go_list_for_gene = self.get_go_list_for_gene_id(gene_id)
+            for go in go_list_for_gene:
+                go_data_map[int(go.go_number.split(':')[-1])] += 1
+        return go_data_map
 
-    def undouplicatingList(self, inputList):
-        output = []
-        for x in inputList:
-            if x not in output:
-                output.append(x)
-        return output
+    def load_initialization_map(self):
+        with open(self.initialization_map_file_name, 'rb') as f:
+            return pickle.load(f)
 
-    def loadInitializationMap(self):
-        initializationMap = open(self.initializationMapFileName,'r')
-        self.initializationMap = pickle.load(initializationMap)
-
-    def printGoDataMap(self, goDataMap):
-        print
-        print
-        print 'ONTOTYPE:', len(goDataMap), 'Gos found'
-        print
-        for key, value in goDataMap.items():
-            print '----------key:-----------'
-            print key
-            print '----------value:---------'
-            print 'goName: ', value.go.goName
-            print 'goNumber: ', value.go.goNumber
-            print 'related genes number: ', value.relatedGenes
-            print
+    @staticmethod
+    def print_go_data_map(go_data_map):
+        print()
+        print()
+        print('ONTOTYPE:', len(go_data_map), 'Gos found')
+        print()
+        for key, value in go_data_map.items():
+            print('----------key:-----------')
+            print(key)
+            print('----------value:---------')
+            print('goName: ', value.go.goName)
+            print('goNumber: ', value.go.goNumber)
+            print('related genes number: ', value.relatedGenes)
+            print()
