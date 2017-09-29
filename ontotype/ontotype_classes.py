@@ -50,12 +50,14 @@ class Ontotype:
         self.initializationMap = pickle.load(initializationMap)
 
     def printGoDataMap(self, goDataMap):
+        print
+        print
         print 'ONTOTYPE:', len(goDataMap), 'Gos found'
         print
         for key, value in goDataMap.items():
-            print '-----key:------'
+            print '----------key:-----------'
             print key
-            print '-----value:----'
+            print '----------value:---------'
             print 'goName: ', value.go.goName
             print 'goNumber: ', value.go.goNumber
             print 'related genes number: ', value.relatedGenes
