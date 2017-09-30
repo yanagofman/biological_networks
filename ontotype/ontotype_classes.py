@@ -17,6 +17,9 @@ class Go(object):
     def __eq__(self, other):
         return self.go_number == other.go_number
 
+    def get_go_id(self):
+        return int(self.go_number.split(':')[-1])
+
 
 def get_non_duplicating_list(input_list):
     output = list()
@@ -31,6 +34,10 @@ class Ontotype(object):
         self.initialization_map_file_name = initialization_map_file_name
         self.initialization_map = self.load_initialization_map()
 
+    def get_distinct_list_of_protein_ids(self):
+        distinct_go_ids = {go_obj.get_go_id() for go_objs in self.initialization_map.values() for go_obj in go_objs}
+        return sorted(distinct_go_ids)
+
     def get_go_list_for_gene_id(self, gene_id):
         return self.initialization_map.get(gene_id)
 
@@ -42,7 +49,7 @@ class Ontotype(object):
                 continue
             go_list_for_gene = self.get_go_list_for_gene_id(gene_id)
             for go in go_list_for_gene:
-                go_data_map[int(go.go_number.split(':')[-1])] += 1
+                go_data_map[int(go.get_go_id())] += 1
         return go_data_map
 
     def load_initialization_map(self):
@@ -63,3 +70,12 @@ class Ontotype(object):
             print('goNumber: ', value.go.goNumber)
             print('related genes number: ', value.relatedGenes)
             print()
+
+
+def main():
+    ontotype = Ontotype("./initialization_map.pkl")
+    proteins = ontotype.get_distinct_list_of_protein_ids()
+    print(proteins[:10])
+
+if __name__ == '__main__':
+    main()

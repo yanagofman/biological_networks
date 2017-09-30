@@ -1,22 +1,22 @@
 import copy
 import csv
 import json
-import pickle
+from datetime import datetime
 
-import numpy as np
-import pandas as pd
 
 from fetch_data.gene_entries import GeneEntries
 from ontotype.ontotype_classes import Ontotype
+from strings import CELL_LINE, DEFECTIVE_GENE, IS_ALIVE
 from utils import similar, clean_up
 
 PRINT_THRESHOLD = 10
+WRITE_THRESHOLD = 1000
 
 
 class BuildTrainingSet(object):
-    def __init__(self, initialization_map_file_name):
+    def __init__(self, initialization_map_file_name, gene_name_to_id_path):
         self.ontotype_obj = Ontotype(initialization_map_file_name)
-        self.gene_entries_fetcher = GeneEntries()
+        self.gene_entries_fetcher = GeneEntries(gene_name_to_id_path)
 
     @staticmethod
     def fetch_cell_lines(reader):
@@ -69,41 +69,53 @@ class BuildTrainingSet(object):
         cell_lines_data_map = self.fetch_cell_lines_core_genes(cell_lines_data, cell_lines_mapping, cell_lines)
         return cell_lines_data_map, cell_lines
 
-    @staticmethod
-    def fill_initial_results(results, cell_lines_data_map):
-        for cell_line, go_map in cell_lines_data_map.items():
-            results.append([cell_line, None, np.array(list(go_map.items())), 1])
+    def get_results_headers(self):
+        distinct_proteins = self.ontotype_obj.get_distinct_list_of_protein_ids()
+        return [CELL_LINE, DEFECTIVE_GENE, IS_ALIVE] + distinct_proteins
 
-    def fill_defective_genes_results(self, results, cell_lines_data_map, cell_lines, reader):
+    @staticmethod
+    def fill_initial_results(writer, cell_lines_data_map):
+        for cell_line, go_map in cell_lines_data_map.items():
+            writer.writerow({**{CELL_LINE: cell_line, DEFECTIVE_GENE: None, IS_ALIVE: 1}, **go_map})
+
+    def fill_defective_genes_results(self, writer, cell_lines_data_map, cell_lines, reader):
+        now = datetime.now()
+        results = list()
         for j, row in enumerate(reader):
             gene = row[0]
             gene_id = self.gene_entries_fetcher.get_single_gene_id(gene)
-            for i, cell_line in enumerate(cell_lines):
+            if gene_id:
                 go_map = self.ontotype_obj.create_go_data_map([gene_id])
-                merged_go_map = self.merge_two_go_data_maps(cell_lines_data_map[cell_line], go_map)
-                results.append([cell_line, gene, np.array(list(merged_go_map.items())), row[i + 1]])
-            if j and (j + 1) % PRINT_THRESHOLD == 0:
-                print("Done iterating on %s defective genes" % (j + 1))
+                for i, cell_line in enumerate(cell_lines):
+                    merged_go_map = self.merge_two_go_data_maps(cell_lines_data_map[cell_line], go_map)
+                    merged_go_map.update({CELL_LINE: cell_line, DEFECTIVE_GENE: gene, IS_ALIVE: row[i + 1]})
+                    results.append(merged_go_map)
+                if j and (j + 1) % PRINT_THRESHOLD == 0:
+                    print("Done iterating on %s defective genes after %s seconds" % (j + 1,
+                                                                                     (datetime.now() - now)
+                                                                                     .total_seconds()))
+            if j and j % WRITE_THRESHOLD == 0:
+                writer.writerows(results)
+                results = list()
+        if results:
+            writer.writerows(results)
 
-    def build_training_set(self, csv_path, fetched_data_path):
-        results = list()
-        with open(csv_path, "r") as f:
-            reader = csv.reader(f)
-            cell_lines_data_map, cell_lines = self.initialize_cell_lines_data_go_map(reader, fetched_data_path)
-            self.fill_initial_results(results, cell_lines_data_map)
-            self.fill_defective_genes_results(results, cell_lines_data_map, cell_lines, reader)
-        return pd.DataFrame(results)
+    def build_training_set(self, gene_input_path, fetched_data_path, training_set_path):
+        with open(training_set_path, "w") as output_file:
+            results_headers = self.get_results_headers()
+            output_writer = csv.DictWriter(output_file, results_headers)
+            output_writer.writeheader()
+            with open(gene_input_path, "r") as f:
+                reader = csv.reader(f)
+                cell_lines_data_map, cell_lines = self.initialize_cell_lines_data_go_map(reader, fetched_data_path)
+                self.fill_initial_results(output_writer, cell_lines_data_map)
+                self.fill_defective_genes_results(output_writer, cell_lines_data_map, cell_lines, reader)
 
 
-def save_df_to_pickle(training_set_path, df):
-    with open(training_set_path, "w") as f:
-        pickle.dump(df, f)
-
-
-def main(gene_input_path, fetched_data_path, initialization_map_file_name, training_set_path):
-    build_training_set_obj = BuildTrainingSet(initialization_map_file_name)
-    df = build_training_set_obj.build_training_set(gene_input_path, fetched_data_path)
-    save_df_to_pickle(training_set_path, df)
+def main(gene_input_path, fetched_data_path, initialization_map_file_name, training_set_path, gene_name_to_id_path):
+    build_training_set_obj = BuildTrainingSet(initialization_map_file_name, gene_name_to_id_path)
+    build_training_set_obj.build_training_set(gene_input_path, fetched_data_path, training_set_path)
 
 if __name__ == '__main__':
-    main("./genes_input.csv", "../fetch_data/data.json", "../ontotype/initialization_map.pkl", "./training_set.pkl")
+    main("./genes_input.csv", "../fetch_data/data.json", "../ontotype/initialization_map.pkl", "./training_set.csv",
+         "../fetch_data/gene_name_to_id_mapping.json")
