@@ -3,12 +3,6 @@ import pickle
 from collections import defaultdict
 
 
-class GoData(object):
-    def __init__(self, go, related_genes_number):
-        self.go = go
-        self.related_genes = related_genes_number
-
-
 class Go(object):
     def __init__(self, go_number, go_name):
         self.go_number = go_number
@@ -56,26 +50,12 @@ class Ontotype(object):
         with open(self.initialization_map_file_name, 'rb') as f:
             return pickle.load(f)
 
-    @staticmethod
-    def print_go_data_map(go_data_map):
-        print()
-        print()
-        print('ONTOTYPE:', len(go_data_map), 'Gos found')
-        print()
-        for key, value in go_data_map.items():
-            print('----------key:-----------')
-            print(key)
-            print('----------value:---------')
-            print('goName: ', value.go.goName)
-            print('goNumber: ', value.go.goNumber)
-            print('related genes number: ', value.relatedGenes)
-            print()
-
 
 def main():
     ontotype = Ontotype("./initialization_map.pkl")
     proteins = ontotype.get_distinct_list_of_protein_ids()
     print(proteins[:10])
+
 
 if __name__ == '__main__':
     main()
