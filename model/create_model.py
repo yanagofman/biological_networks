@@ -126,14 +126,14 @@ class RF(object):
         plt.show()
         return fprs, tprs, auc(fprs, tprs)
 
-     def pre_recall(sizes,n=2):
+    def pre_recall(self, sizes, n=2):
         sizes = sorted(sizes)
         plt.figure(1)
         plt.subplot(211)
         plt.ylim(0, 1)
         plt.xlim(0, 1)
-        plt.ylabel("True Positive rate")
-        plt.xlabel("False Positive Rate")
+        plt.ylabel("Precision")
+        plt.xlabel("Recall")
         plt.plot([0, 1], [0, 1], 'r-')
         clf = RandomForestClassifier(n_jobs = -1)
         indexes = list(range(self.size))

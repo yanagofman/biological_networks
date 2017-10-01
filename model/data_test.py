@@ -52,7 +52,7 @@ def load_classifiers():
 def test_classifiers(rfClf,svmClf=None):
     sizes = [int((0.5+0.04*i)*rfClf.size) for i in range(11)]
 
-    rfClf.accurGraphs(sizes,n=2)
+    rfClf.accur_graphs(sizes,n=2)
    # svmClf.accurGraphs(sizes)
 
     rf_fprs,rf_tprs,rf_auc = rfClf.ROC(sizes,n=2)
