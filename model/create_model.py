@@ -12,19 +12,19 @@ class RF(object):
         self.dt = np.array(data)
         self.lbs = np.array(labels)
         self.size = np.size(self.lbs)
-        self.classifiar = RandomForestClassifier()
+        self.classifiar = RandomForestClassifier(n_jobs = -1)
         indexes = list(range(self.size))
         np.random.shuffle(indexes)
         self.classifiar.fit(self.dt[indexes[:train_size]], self.lbs[indexes[:train_size]])
 
     # Gets size, creates n times a classifier for data, prints average stats
-    def accuracy(self, trainsize, show=True, n=10):
+    def accuracy(self, trainsize, show=True, n=1):
         testsize = self.size - trainsize
         TP = 0
         TN = 0
         T = 0
 
-        clf = RandomForestClassifier()
+        clf = RandomForestClassifier(n_jobs = -1)
         train_acc = 0
         indexes = list(range(self.size))
         for i in range(n):
@@ -65,7 +65,7 @@ class RF(object):
         return [T, TP, TN, train_acc]
 
     # Get sizes list and make accuracies graph depended on those train sizes
-    def accur_graphs(self, sizes):
+    def accur_graphs(self, sizes, n = 1):
         vals = list()
         T = list()
         TP = list()
@@ -73,7 +73,7 @@ class RF(object):
         train = list()
         sizes = sorted(sizes)
         for i in sizes:
-            ret = self.accuracy(i, False)
+            ret = self.accuracy(i, False, n)
             T += [ret[0]]
             TP += [ret[1]]
             TN += [ret[2]]
@@ -92,7 +92,7 @@ class RF(object):
         plt.show()
 
     # Makes the Roc graph for classifier, using different trainsizes, each n times
-    def ROC(self, sizes):
+    def ROC(self, sizes, n = 1):
         sizes = sorted(sizes)
         plt.figure(1)
         plt.subplot(211)
@@ -101,11 +101,11 @@ class RF(object):
         plt.ylabel("True Positive rate")
         plt.xlabel("False Positive Rate")
         plt.plot([0, 1], [0, 1], 'r-')
-        clf = RandomForestClassifier()
+        clf = RandomForestClassifier(n_jobs = -1)
         indexes = list(range(self.size))
         dat = dict()
         for size in sizes:
-            for j in range(10):
+            for j in range(n):
                 np.random.shuffle(indexes)
                 clf.fit(self.dt[indexes[:size]], self.lbs[indexes[:size]])
                 testLbs = self.lbs[indexes[size:]]
@@ -126,6 +126,41 @@ class RF(object):
         plt.show()
         return fprs, tprs, auc(fprs, tprs)
 
+     def pre_recall(sizes,n=2):
+        sizes = sorted(sizes)
+        plt.figure(1)
+        plt.subplot(211)
+        plt.ylim(0, 1)
+        plt.xlim(0, 1)
+        plt.ylabel("True Positive rate")
+        plt.xlabel("False Positive Rate")
+        plt.plot([0, 1], [0, 1], 'r-')
+        clf = RandomForestClassifier(n_jobs = -1)
+        indexes = list(range(self.size))
+        dat = dict()
+        for size in sizes:
+            for j in range(n):
+                np.random.shuffle(indexes)
+                clf.fit(self.dt[indexes[:size]], self.lbs[indexes[:size]])
+                testLbs = self.lbs[indexes[size:]]
+                testPre = clf.predict(self.dt[indexes[size:]])
+                tp = np.sum(testPre + testLbs == 2)
+                re = tp/(np.sum(testLbs == 1))
+                pre = tp/(np.sum(testPre == 1))
+                if re in dat:
+                    dat[re] += [pre, 1]
+                else:
+                    dat[re] = np.array([pre, 1])
+        fprs = sorted(list(dat.keys()))
+        tprs = []
+        for i in range(len(fprs)):
+            tprs += [dat[fprs[i]][0] / dat[fprs[i]][1]]
+        fprs = [0] + fprs + [1]
+        tprs = [1] + tprs + [0]
+        plt.plot(fprs, tprs, 'b-')
+        plt.savefig("RF precision-recall curve.png")
+        plt.show()
+        
     def re_class(self, train_size=900):
         indexes = list(range(self.size))
         np.random.shuffle(indexes)
