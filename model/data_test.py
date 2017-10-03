@@ -4,7 +4,6 @@ import pickle as pkl
 from math import *
 
 
-to_float = lambda x: 0 if x =='' else float(x)
 
 def build_classifier(traindata_filename):
     data = list()
@@ -27,18 +26,76 @@ def build_classifier(traindata_filename):
        
     print("---finished reading data file---")
     data = np.array(data)        
-    tresh = np.average(lbls)
+    tresh1 = np.average(lbls)+np.sqrt(np.var(lbls))
+    tresh2 = np.average(lbls)-np.sqrt(np.var(lbls))
     #print("max = ",max(lbls),",min = ",min(lbls), ",avg = ",tresh)
-    lbls[lbls > tresh] = 1
-    lbls[lbls <= tresh] = 0
+    data1 = data[lbls > tresh1]
+    data2 = data[lbls <= tresh2]
+    lbls1 = lbls[lbls > tresh1]
+    lbls2 = lbls[lbls <= tresh2]
+    lbls = np.append(lbls1 , lbls2)
+    data = np.append(data1, data2,axis=0)
     
+    lbls[lbls > tresh1] = 1
+    lbls[lbls <= tresh2] = 0
+
     print("---finished building data set---")
     
     rfClf = RF(data,lbls,int(0.9*len(data)))
-   # svmClf = SVM(data,lbls,int(0.9*len(data)))
     print("---finished building classifiers---")
     pkl.dump(rfClf,open('random_forest_classifier.p','wb'))
-   # pkl.dump(svmClf,open('svm_classifier.p','wb'))
+    print("---done---")
+   
+    
+    return rfClf#, svmClf
+
+def build_classifier2(traindata_filename):
+    data_dict = dict()
+    lbls_dict = dict()
+    
+    with open(traindata_filename, newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        first_line = False
+        j = 0
+        for row in reader:
+            if not(first_line):
+                first_line = True
+                continue
+            if row[0] in data_dict:
+                lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
+                vec = np.array(row[3:])
+                vec[vec == ''] = '0'
+                data_dict[row[0]].append(vec.astype(int))
+            else:
+                lbls_dict[row[0]] = np.array(float(row[2]))
+                vec = np.array(row[3:])
+                vec[vec == ''] = '0'
+                data_dict[row[0]]=[vec.astype(int)]
+       
+    print("---finished reading data file---")
+    data = None
+    lbls = np.array([])
+    for cell in data_dict:
+        print('---',cell,'---')
+        print(len(data_dict[cell]))
+        tresh1 = np.average(lbls_dict[cell])+np.sqrt(np.var(lbls_dict[cell]))
+        tresh2 = np.average(lbls_dict[cell])-np.sqrt(np.var(lbls_dict[cell]))
+        data1 = np.array(data_dict[cell])[lbls_dict[cell] > tresh1]
+        data2 = np.array(data_dict[cell])[lbls_dict[cell] <= tresh2]
+        lbls1 = np.ones(len(data1))
+        lbls2 = np.zeros(len(data2))
+        lbls = np.append(lbls,lbls1)
+        lbls = np.append(lbls,lbls2)
+        if data != None:
+            data = np.append(data,np.append(data1, data2,axis=0),axis = 0)
+        else:
+            data = np.append(data1, data2,axis=0)
+        
+    print("---finished building data set---")
+    
+    rfClf = RF(data,lbls,int(0.9*len(data)))
+    print("---finished building classifiers---")
+    pkl.dump(rfClf,open('random_forest_classifier.p','wb'))
     print("---done---")
    
     
