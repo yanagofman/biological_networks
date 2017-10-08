@@ -134,7 +134,6 @@ class RF(object):
         plt.xlim(0, 1)
         plt.ylabel("Precision")
         plt.xlabel("Recall")
-        plt.plot([0, 1], [0, 1], 'r-')
         clf = RandomForestClassifier(n_jobs = -1)
         indexes = list(range(self.size))
         dat = dict()
