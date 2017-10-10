@@ -2,6 +2,7 @@ import pickle
 
 from collections import defaultdict
 
+import numpy as np
 
 class Go(object):
     def __init__(self, go_number, go_name):
@@ -13,7 +14,9 @@ class Go(object):
 
     def get_go_id(self):
         return int(self.go_number.split(':')[-1])
-
+    
+    def __hash__(self):
+        return hash(self.go_number)
 
 def get_non_duplicating_list(input_list):
     output = list()
@@ -49,6 +52,16 @@ class Ontotype(object):
     def load_initialization_map(self):
         with open(self.initialization_map_file_name, 'rb') as f:
             return pickle.load(f)
+    
+    def randomize_map(self):
+        keys = list(self.initialization_map.keys())
+        values = list(self.initialization_map.values())
+        self.initialization_map = defaultdict()
+        n = len(values)
+        indexes = list(range(n))
+        np.random.shuffle(indexes)
+        for i in range(n):
+           self.initialization_map[keys[i]] = values[indexes[i]]
 
 
 def main():
