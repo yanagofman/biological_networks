@@ -1,8 +1,10 @@
 import pickle
-
+import random
 from collections import defaultdict
 
-import numpy as np
+LOWER_BOUND = 3
+UPPER_BOUND = 10
+
 
 class Go(object):
     def __init__(self, go_number, go_name):
@@ -17,6 +19,7 @@ class Go(object):
     
     def __hash__(self):
         return hash(self.go_number)
+
 
 def get_non_duplicating_list(input_list):
     output = list()
@@ -54,20 +57,17 @@ class Ontotype(object):
             return pickle.load(f)
     
     def randomize_map(self):
-        keys = list(self.initialization_map.keys())
-        values = list(self.initialization_map.values())
-        self.initialization_map = defaultdict()
-        n = len(values)
-        indexes = list(range(n))
-        np.random.shuffle(indexes)
-        for i in range(n):
-           self.initialization_map[keys[i]] = values[indexes[i]]
+        unique_proteins = set(sum(self.initialization_map.values(), []))
+        randomized_initialization_map = dict()
+        for gene_id in self.initialization_map:
+            randomized_initialization_map[gene_id] = random.sample(unique_proteins,
+                                                                   random.randint(LOWER_BOUND, UPPER_BOUND))
+        self.initialization_map = randomized_initialization_map
 
 
 def main():
     ontotype = Ontotype("./initialization_map.pkl")
-    proteins = ontotype.get_distinct_list_of_protein_ids()
-    print(proteins[:10])
+    ontotype.randomize_map()
 
 
 if __name__ == '__main__':

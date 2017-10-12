@@ -149,6 +149,7 @@ class CellLineCrawler(object):
 
     def read_whole_mutations_data(self):
         results = dict()
+        # Reading the mutations for each cell line
         for i, cell_line in enumerate(CELL_LINES):
             print("Tying to fetch %s(%s)" % (cell_line, i))
             if i:
