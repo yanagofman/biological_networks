@@ -171,5 +171,7 @@ def main(gene_input_path, fetched_data_path, initialization_map_file_name, train
         build_training_set_obj.build_training_set(gene_input_path, fetched_data_path, new_training_set_path, single_csv)
 
 if __name__ == '__main__':
-    main("./genes_input.csv", "../fetch_data/data.json", "../ontotype/initialization_map.pkl",
-         "./training_set_files/training_set.csv", "../fetch_data/gene_name_to_id_mapping.json")
+    for single_csv in [False, True]:
+        main("./genes_input.csv", "../fetch_data/data.json", "../ontotype/initialization_map.pkl",
+             "./training_set_files/training_set.csv", "../fetch_data/gene_name_to_id_mapping.json",
+             single_csv=single_csv)
