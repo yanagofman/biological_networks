@@ -45,7 +45,7 @@ def build_RF(traindata_filename):
 
     print("---finished building data set---")
 
-    rfClf = RF(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -90,7 +90,7 @@ def build_RF_for_celline(traindata_filename,skip = False):
 
     print("---finished building data set---")
 
-    rfClf = RF(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -191,7 +191,7 @@ def build_RF2(traindata_filename, genes = None):
 
     print("---finished building data set---")
 
-    rfClf = RF(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
    # pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -239,7 +239,7 @@ def build_RF3(traindata_filename,genes = None):
 
     print("---finished building data set---")
 
-    rfClf = RF(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
