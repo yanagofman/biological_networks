@@ -4,6 +4,16 @@ import pickle as pkl
 from create_model import *
 from sklearn.ensemble import RandomForestRegressor
 
+
+def load_genes(filename):
+    data = set()
+    data.add("")
+    with open(filename, newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        for row in reader:
+            data.add(row[0])
+    return np.array(list(data))
+
 def build_classifier(traindata_filename):
     data = list()
     lbls = np.array([])
@@ -89,7 +99,7 @@ def build_classifier_for_celline(traindata_filename,skip = False):
 
     return rfClf 
 
-def load_data1():
+def load_data(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
 
@@ -101,49 +111,7 @@ def load_data1():
             if not (first_line):
                 first_line = True
                 continue
-            if row[0] in data_dict:
-                lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
-                vec = np.array(row[3:])
-                vec[vec == ''] = '0'
-                data_dict[row[0]].append(vec.astype(int))
-            else:
-                lbls_dict[row[0]] = np.array(float(row[2]))
-                vec = np.array(row[3:])
-                vec[vec == ''] = '0'
-                data_dict[row[0]] = [vec.astype(int)]
-
-    print("---finished reading data file---")
-    data = None
-    lbls = np.array([])
-    for cell in data_dict:
-        print('---', cell, '---')
-        print(len(data_dict[cell]))
-        tresh1 = np.average(lbls_dict[cell]) + np.sqrt(np.var(lbls_dict[cell]))
-        tresh2 = np.average(lbls_dict[cell]) - np.sqrt(np.var(lbls_dict[cell]))
-        data1 = np.array(data_dict[cell])
-        lbls1 = lbls_dict[cell][lbls_dict[cell] > tresh1]
-
-        lbls = np.append(lbls, lbls1)
-        if data != None:
-            data = np.append(data, data1, axis=0)
-        else:
-            data = data1
-
-    print("---finished building data set---")
-    
-    return data,lbls
-
-def load_data(traindata_filename,skip = False):
-    data_dict = dict()
-    lbls_dict = dict()
-
-    with open(traindata_filename, newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        first_line = False
-        j = 0
-        for row in reader:
-            if not (first_line):
-                first_line = True
+            if genes != None and not(row[1] in genes):
                 continue
             if row[0] in data_dict:
                 lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
@@ -180,7 +148,7 @@ def load_data(traindata_filename,skip = False):
     return data,lbls
 
 
-def build_classifier2(traindata_filename):
+def build_classifier2(traindata_filename, genes = None):
     data_dict = dict()
     lbls_dict = dict()
 
@@ -191,6 +159,8 @@ def build_classifier2(traindata_filename):
         for row in reader:
             if not (first_line):
                 first_line = True
+                continue
+            if genes != None and not(row[1] in genes):
                 continue
             if row[0] in data_dict:
                 lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
@@ -280,61 +250,6 @@ def build_classifier3(traindata_filename):
     return rfClf  # , svmClf
 
 
-def build_classifier4(traindata_filename):
-    data_dict = dict()
-    lbls_dict = dict()
-
-    with open(traindata_filename, newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        first_line = False
-        j = 0
-        for row in reader:
-            if not (first_line):
-                first_line = True
-                continue
-            if row[0] in data_dict:
-                lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
-                vec = np.array(row[3:])
-                vec[vec == ''] = '0'
-                data_dict[row[0]].append(vec.astype(int))
-            else:
-                lbls_dict[row[0]] = np.array(float(row[2]))
-                vec = np.array(row[3:])
-                vec[vec == ''] = '0'
-                data_dict[row[0]] = [vec.astype(int)]
-
-    print("---finished reading data file---")
-    data = None
-    lbls = np.array([])
-    for cell in data_dict:
-        print('---', cell, '---')
-        print(len(data_dict[cell]))
-        tresh1 = np.average(lbls_dict[cell]) + np.sqrt(np.var(lbls_dict[cell]))
-        tresh2 = np.average(lbls_dict[cell]) - np.sqrt(np.var(lbls_dict[cell]))
-        data1 = np.array(data_dict[cell])[lbls_dict[cell] > tresh1]
-        data2 = np.array(data_dict[cell])[lbls_dict[cell] < tresh2]
-        data3 = np.array(data_dict[cell])[
-            abs(lbls_dict[cell] - np.average(lbls_dict[cell])) <= np.sqrt(np.var(lbls_dict[cell]))]
-        lbls1 = np.ones(len(data1))
-        lbls2 = np.ones(len(data2)) * -1
-        lbls3 = np.zeros(len(data3))
-        lbls = np.append(lbls, lbls1)
-        lbls = np.append(lbls, lbls2)
-        lbls = np.append(lbls, lbls3)
-        if data != None:
-            data = np.append(data, np.append(np.append(data1, data2, axis=0), data3, axis=0), axis=0)
-        else:
-            data = np.append(np.append(data1, data2, axis=0), data3, axis=0)
-
-    print("---finished building data set---")
-
-    rfClf = RF(data, lbls, int(0.9 * len(data)))
-    print("---finished building classifiers---")
-    pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
-    print("---done---")
-
-    return rfClf
-
 
 def load_classifiers():
     rfClf = pkl.load(open('random_forest_classifier.p', 'rb'))
@@ -368,14 +283,14 @@ def test_classifiers(rfClf, svmClf=None):
     plt.show()
 
 
-def compare_to_random_roc(file_name, builder = build_classifier2 ):
-    original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv")
+def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = None ):
+    original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
     sizes = [int((0.5 + 0.1 * i) * original_clf.size) for i in range(5)]
     or_fprs,or_tprs,or_auc = original_clf.ROC(sizes,1)
     rand_roc = dict()
     rocs = []
     for i in range(1,11):
-        clf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv")
+        clf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
         fprs,tprs,t_auc = clf.ROC(sizes,1)
         rocs+=[(fprs,tprs,t_auc)]
         for i in range(len(fprs)):
@@ -418,10 +333,10 @@ def compare_to_random_roc(file_name, builder = build_classifier2 ):
         plt.savefig("graph_results/"+file_name+"/Roc curve - shuffle "+str(i+1)+".png")
         plt.show()
         
-def compare_to_random_reg(file_name, builder = load_data ):
+def compare_to_random_reg(file_name, builder = load_data, genes_list = None ):
     rf = RandomForestRegressor(n_jobs = -1)
-    dt,lb = builder("training_set_files/no_shuffle/"+file_name+".csv")
-    sizes = [int((0.7 + 0.15 * j) * len(lb)) for j in range(2)]
+    dt,lb = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
+    sizes = [int((0.5 + 0.1 * j) * len(lb)) for j in range(5)]
     test_acc = []
     train_acc = []
     for size in sizes:
@@ -432,13 +347,13 @@ def compare_to_random_reg(file_name, builder = load_data ):
         rf.fit(train_dt,train_lb)
         test_acc += [np.sum(abs(rf.predict(test_dt) - test_lb) <= 10**-7)/len(test_dt)]
         train_acc += [np.sum(abs(rf.predict(train_dt) - train_lb) <= 10**-7)/len(train_dt)]
-    rand_test_acc = np.zeros(2)
-    rand_train_acc = np.zeros(2)
+    rand_test_acc = np.zeros(5)
+    rand_train_acc = np.zeros(5)
     for i in range(1,11):
         temp_test_acc = []
         temp_train_acc = []
         print("---",i,"---")
-        temp_dt, temp_lb = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv")
+        temp_dt, temp_lb = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
         
         for size in sizes:
             train_dt = temp_dt[:size]
@@ -463,7 +378,7 @@ def compare_to_random_reg(file_name, builder = load_data ):
     rand_train, = plt.plot(sizes, rand_train_acc, 'y-', label="Rf Regression accuracy of average random data - train")
     plt.legend(handles=[test,train,rand_test,rand_train])
     plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-    plt.savefig("graph_results/"+file_name+"/Roc curve - shuffle "+str(i+1)+".png")
+    plt.savefig("graph_results/"+file_name+"/RF regression accuracy graphs.png")
     plt.show()
         
     
