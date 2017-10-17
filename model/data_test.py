@@ -1,7 +1,6 @@
 import csv
 import pickle as pkl
-
-from create_model import *
+from model.create_model import *
 
 
 def load_genes(filename):
@@ -13,7 +12,7 @@ def load_genes(filename):
             data.add(row[0])
     return np.array(list(data))
 
-def build_classifier(traindata_filename):
+def build_RF(traindata_filename):
     data = list()
     lbls = np.array([])
 
@@ -48,14 +47,14 @@ def build_classifier(traindata_filename):
 
     rfClf = RF(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
-    pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
+    #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
 
     return rfClf  # , svmClf
 
 
 
-def build_classifier_for_celline(traindata_filename,skip = False):
+def build_RF_for_celline(traindata_filename,skip = False):
     data = list()
     lbls = np.array([])
 
@@ -93,7 +92,7 @@ def build_classifier_for_celline(traindata_filename,skip = False):
 
     rfClf = RF(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
-    pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
+    #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
 
     return rfClf 
@@ -146,7 +145,7 @@ def load_data(traindata_filename,genes = None):
     return data,lbls
 
 
-def build_classifier2(traindata_filename, genes = None):
+def build_RF2(traindata_filename, genes = None):
     data_dict = dict()
     lbls_dict = dict()
 
@@ -194,13 +193,13 @@ def build_classifier2(traindata_filename, genes = None):
 
     rfClf = RF(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
-    pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
+   # pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
 
     return rfClf  # , svmClf
 
 
-def build_classifier3(traindata_filename,genes = None):
+def build_RF3(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
 
@@ -242,20 +241,17 @@ def build_classifier3(traindata_filename,genes = None):
 
     rfClf = RF(data, lbls, int(0.9 * len(data)))
     print("---finished building classifiers---")
-    pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
+    #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
 
     return rfClf  # , svmClf
 
 
 
-def load_classifiers():
-    rfClf = pkl.load(open('random_forest_classifier.p', 'rb'))
-    # svmClf = pkl.load(open('svm_classifier.p','rb'))
-    return rfClf  # , svmClf
 
 
-def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = None, num_of_shuffles = 10 ):
+
+def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num_of_shuffles = 10 ):
     original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
     or_fprs,or_tprs,or_auc = original_clf.ROC()
     rand_roc = dict()
@@ -293,7 +289,7 @@ def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = N
     plt.show()
    
         
-def compare_to_random_reg(file_name, builder = build_classifier2, genes_list = None ,num_of_shuffles = 10):
+def compare_to_random_reg(file_name, builder = build_RF2, genes_list = None ,num_of_shuffles = 10):
     
     rf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
     real_dist = rf.reg_av_squard_distance()
