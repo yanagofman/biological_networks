@@ -2,7 +2,6 @@ import csv
 import pickle as pkl
 
 from create_model import *
-from sklearn.ensemble import RandomForestRegressor
 
 
 def load_genes(filename):
@@ -128,8 +127,7 @@ def load_data(traindata_filename,genes = None):
     data = None
     lbls = np.array([])
     for cell in data_dict:
-        print('---', cell, '---')
-        print(len(data_dict[cell]))
+
         tresh1 = np.average(lbls_dict[cell]) + np.sqrt(np.var(lbls_dict[cell]))
         tresh2 = np.average(lbls_dict[cell]) - np.sqrt(np.var(lbls_dict[cell]))
         data1 = np.array(data_dict[cell])[lbls_dict[cell] > tresh1]
@@ -202,7 +200,7 @@ def build_classifier2(traindata_filename, genes = None):
     return rfClf  # , svmClf
 
 
-def build_classifier3(traindata_filename):
+def build_classifier3(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
 
@@ -213,6 +211,8 @@ def build_classifier3(traindata_filename):
         for row in reader:
             if not (first_line):
                 first_line = True
+                continue
+            if genes != None and not(row[1] in genes):
                 continue
             if row[0] in data_dict:
                 lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
@@ -229,8 +229,6 @@ def build_classifier3(traindata_filename):
     data = None
     lbls = np.array([])
     for cell in data_dict:
-        print('---', cell, '---')
-        print(len(data_dict[cell]))
         tresh = np.average(lbls_dict[cell])
         lbls_dict[cell][lbls_dict[cell] > tresh] = 1
         lbls_dict[cell][lbls_dict[cell] <= tresh] = 0
@@ -257,41 +255,15 @@ def load_classifiers():
     return rfClf  # , svmClf
 
 
-def test_classifiers(rfClf, svmClf=None):
-    sizes = [int((0.5 + 0.1 * i) * rfClf.size) for i in range(5)]
-
-    rfClf.accur_graphs(sizes, n=1)
-    # svmClf.accurGraphs(sizes)
-
-    rf_fprs, rf_tprs, rf_auc = rfClf.ROC(sizes, n=1)
-    # svm_fprs,svm_tprs,svm_auc = svmClf.ROC(sizes)
-
-    # rfClf.pre_recall(sizes,n=2)
-
-    plt.figure(1)
-    plt.subplot(211)
-    plt.ylim(0, 1)
-    plt.xlim(0, 1)
-    plt.ylabel("True Positive rate")
-    plt.xlabel("False Positive Rate")
-    plt.plot([0, 1], [0, 1], 'r-')
-    rf_roc, = plt.plot(rf_fprs, rf_tprs, 'b-', label="RF ROC, auc = " + str(rf_auc))
-    # svm_roc, = plt.plot(svm_fprs,svm_tprs,'y-',label = "SVM ROc, auc = "+str(svm_auc))
-    plt.legend(handles=[rf_roc])
-    plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-    plt.savefig("ROC curves.png")
-    plt.show()
-
-
-def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = None ):
+def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = None, num_of_shuffles = 10 ):
     original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
-    sizes = [int((0.5 + 0.1 * i) * original_clf.size) for i in range(5)]
-    or_fprs,or_tprs,or_auc = original_clf.ROC(sizes,1)
+    or_fprs,or_tprs,or_auc = original_clf.ROC()
     rand_roc = dict()
     rocs = []
-    for i in range(1,11):
+    for i in range(1,num_of_shuffles+1):
+        print("---",i,"---")
         clf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
-        fprs,tprs,t_auc = clf.ROC(sizes,1)
+        fprs,tprs,t_auc = clf.ROC()
         rocs+=[(fprs,tprs,t_auc)]
         for i in range(len(fprs)):
             if(fprs[i] in rand_roc):
@@ -317,68 +289,25 @@ def compare_to_random_roc(file_name, builder = build_classifier2, genes_list = N
     legend+=[ran_roc]
     plt.legend(handles=legend)
     plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-    plt.savefig("graph_results/"+file_name+"/Roc curve.png")
+    plt.savefig("graph_results/ROC")
     plt.show()
-    for i in range(10):
-        plt.subplot(211)
-        plt.ylim(0, 1)
-        plt.xlim(0, 1)
-        plt.ylabel("True Positive rate")
-        plt.xlabel("False Positive Rate")
-        plt.plot([0, 1], [0, 1], 'r-')
-        gr, = plt.plot(rocs[i][0], rocs[i][1], 'b-', label="RF shuffle "+str(i+1)+" ROC, auc = " + str(rocs[i][2]))
-        legend =[gr]
-        plt.legend(handles=[gr])
-        plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-        plt.savefig("graph_results/"+file_name+"/Roc curve - shuffle "+str(i+1)+".png")
-        plt.show()
+   
         
-def compare_to_random_reg(file_name, builder = load_data, genes_list = None ):
-    rf = RandomForestRegressor(n_jobs = -1)
-    dt,lb = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
-    sizes = [int((0.5 + 0.1 * j) * len(lb)) for j in range(5)]
-    test_acc = []
-    train_acc = []
-    for size in sizes:
-        train_dt = dt[:size]
-        train_lb = lb[:size]
-        test_dt = dt[size+1:]
-        test_lb = lb[size+1:]
-        rf.fit(train_dt,train_lb)
-        test_acc += [np.sum(abs(rf.predict(test_dt) - test_lb) <= 10**-7)/len(test_dt)]
-        train_acc += [np.sum(abs(rf.predict(train_dt) - train_lb) <= 10**-7)/len(train_dt)]
-    rand_test_acc = np.zeros(5)
-    rand_train_acc = np.zeros(5)
-    for i in range(1,11):
-        temp_test_acc = []
-        temp_train_acc = []
+def compare_to_random_reg(file_name, builder = build_classifier2, genes_list = None ,num_of_shuffles = 10):
+    
+    rf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
+    real_dist = rf.reg_av_squard_distance()
+    avg_rand_dist = 0
+    for i in range(1,num_of_shuffles+1):
         print("---",i,"---")
-        temp_dt, temp_lb = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
-        
-        for size in sizes:
-            train_dt = temp_dt[:size]
-            train_lb = temp_lb[:size]
-            test_dt = temp_dt[size+1:]
-            test_lb = temp_lb[size+1:]
-            rf.fit(train_dt,train_lb)
-            temp_test_acc += [np.sum(abs(rf.predict(test_dt) - test_lb) <= 10**-7)/len(test_dt)]
-            temp_train_acc += [np.sum(abs(rf.predict(train_dt) - train_lb) <= 10**-7)/len(train_dt)]
-        rand_test_acc += temp_test_acc
-        rand_train_acc += temp_train_acc
-    rand_test_acc /= 10
-    rand_train_acc/=10
-    plt.subplot(211)
-    #plt.ylim(0, 1)
-    #plt.xlim(0, 1)
-    plt.ylabel("Accuracy")
-    plt.xlabel("Train data size")
-    test, = plt.plot(sizes, test_acc, 'g-', label="Rf Regression accuracy of real data - test")
-    train, = plt.plot(sizes, train_acc, 'b-', label="Rf Regression accuracy of real data - train")
-    rand_test, = plt.plot(sizes, rand_test_acc, 'r-', label="Rf Regression accuracy of average random data - test")
-    rand_train, = plt.plot(sizes, rand_train_acc, 'y-', label="Rf Regression accuracy of average random data - train")
-    plt.legend(handles=[test,train,rand_test,rand_train])
-    plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-    plt.savefig("graph_results/"+file_name+"/RF regression accuracy graphs.png")
-    plt.show()
+        rf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
+        dist = rf.reg_av_squard_distance()
+        print("dist =",dist)
+        print("--------")
+        avg_rand_dist += dist/num_of_shuffles
+    print("real distance = ",real_dist)
+    print("avarage diatnace of random = ",avg_rand_dist)
+    return real_dist,avg_rand_dist
+    
         
     
