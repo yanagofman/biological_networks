@@ -1,18 +1,15 @@
 import csv
 import numpy
+from scipy.stats.stats import pearsonr
 
 class Validator(object):
 
     def __init__(self, data_file):
 
         self.data_file = data_file
-
         #self.mean_bound = -0.812928571429
-        # self.pearson_bound = 0.8
         #self.getMeanBound()
-
-        self.variance_bound = 0.101202882653
-
+        #self.variance_bound = 0.101202882653
         #self.variance_bound = self.getVarianceBound()
 
     # def getVarianceBound(self):
@@ -30,6 +27,10 @@ class Validator(object):
     def getGeneCsProfileVector(self, line):
         vector = line[1:]
         return [float(i) for i in vector]
+
+    def computePearsonPValue(self, x, y):
+        r, p = pearsonr(x,y)
+        return r
 
     # def getMeanBound(self):
     #     result = []
@@ -62,13 +63,16 @@ class Validator(object):
 
     def isLineValid(self, line):
         vector = self.getGeneCsProfileVector(line)
-        variance = self.coumputeVarianceOfVector(vector)
-        bool1 = variance > self.variance_bound
+        vector_other = [0,1,0,0,0,0,0,0,0,0,0,0,1,0]
+        p = self.computePearsonPValue(vector, vector_other)
+        bool1 = p < 0.8
+        #variance = self.coumputeVarianceOfVector(vector)
+        #bool1 = variance > self.variance_bound
         return bool1
 
 
     def eliminateLines(self):
-        with open(self.data_file, 'rb') as infile, open('genes_data_after_second_elimination.csv', 'wb') as outfile:
+        with open(self.data_file, 'rb') as infile, open('genes_data_after_pearson_elimination.csv', 'wb') as outfile:
             writer = csv.writer(outfile)
             reader = csv.reader(infile, delimiter=',')
             for line in reader:
