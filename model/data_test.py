@@ -144,6 +144,53 @@ def load_data(traindata_filename,genes = None):
     print("---finished building data set---")
     return data,lbls
 
+def load_data_clf(traindata_filename,genes = None):
+    data_dict = dict()
+    lbls_dict = dict()
+
+    with open(traindata_filename, newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        first_line = False
+        j = 0
+        for row in reader:
+            if not (first_line):
+                first_line = True
+                continue
+            if genes != None and not(row[1] in genes):
+                continue
+            if row[0] in data_dict:
+                lbls_dict[row[0]] = np.append(lbls_dict[row[0]], float(row[2]))
+                vec = np.array(row[3:])
+                vec[vec == ''] = '0'
+                data_dict[row[0]].append(vec.astype(int))
+            else:
+                lbls_dict[row[0]] = np.array(float(row[2]))
+                vec = np.array(row[3:])
+                vec[vec == ''] = '0'
+                data_dict[row[0]] = [vec.astype(int)]
+
+    print("---finished reading data file---")
+    data = None
+    lbls = np.array([])
+    for cell in data_dict:
+
+        tresh1 = np.average(lbls_dict[cell]) + np.sqrt(np.var(lbls_dict[cell]))
+        tresh2 = np.average(lbls_dict[cell]) - np.sqrt(np.var(lbls_dict[cell]))
+        data1 = np.array(data_dict[cell])[lbls_dict[cell] > tresh1]
+        data2 = np.array(data_dict[cell])[lbls_dict[cell] <= tresh2]
+        lbls1 = np.ones(len(data1))
+        
+        lbls2 = np.zeros(len(data2))
+        lbls = np.append(lbls, lbls1)
+        lbls = np.append(lbls, lbls2)
+        if data != None:
+            data = np.append(data, np.append(data1, data2, axis=0), axis=0)
+        else:
+            data = np.append(data1, data2, axis=0)
+
+    print("---finished building data set---")
+    return data,lbls
+
 
 def build_RF2(traindata_filename, genes = None):
     data_dict = dict()
@@ -289,14 +336,15 @@ def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num
     plt.show()
    
         
-def compare_to_random_reg(file_name, builder = build_RF2, genes_list = None ,num_of_shuffles = 10):
-    
-    rf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
+def compare_to_random_reg(file_name, loader = load_data, genes_list = None ,num_of_shuffles = 10):
+    dt,lb = loader("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
+    rf = RF_TESTS(dt,lb)
     real_dist = rf.reg_av_squard_distance()
     avg_rand_dist = 0
     for i in range(1,num_of_shuffles+1):
         print("---",i,"---")
-        rf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
+        dt,lb = loader("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
+        rf = RF_TESTS(dt,lb)
         dist = rf.reg_av_squard_distance()
         print("dist =",dist)
         print("--------")
