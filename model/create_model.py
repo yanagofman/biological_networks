@@ -8,13 +8,14 @@ from sklearn.cross_validation import KFold
 # Class to test the Random Forest
 class RF_TESTS(object):
     # creates a new object of class, chooses training data and builds predictor
-    def __init__(self, data, labels, train_size=900):
+    def __init__(self, data, labels):
         self.dt = np.array(data)
         self.lbs = np.array(labels)
         self.size = np.size(self.lbs)
         
 
-    # Makes the Roc graph for classifier, using different trainsizes, each n times
+    # Runs the classifier with cross validation over num_of_folds folds of the data given on __init__
+    #For each run, gets the roc results over test_data, and returns the roc result of all the runs together
     def clf_roc(self, num_of_folds=5):
         sizes = sorted(sizes)
         plt.figure(1)
@@ -49,7 +50,7 @@ class RF_TESTS(object):
         plt.show()
         return fprs, tprs, auc(fprs, tprs)
     
-    #gets average squared distance of the regressor's prediction from test labels
+    #gets average squared distance of the regressor's prediction from test labels, using cross validation over num_of_folds folds
     def reg_av_squard_distance(self,num_of_folds = 3):
         kf = KFold(n = self.size, n_folds = num_of_folds)
         reg = RandomForestRegressor(n_jobs = -1)

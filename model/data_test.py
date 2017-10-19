@@ -2,7 +2,7 @@ import csv
 import pickle as pkl
 from model.create_model import *
 
-
+#loads list of genes from file for alimination
 def load_genes(filename):
     data = set()
     data.add("")
@@ -11,6 +11,12 @@ def load_genes(filename):
         for row in reader:
             data.add(row[0])
     return np.array(list(data))
+
+#builds an instance of RF to test RandomForestClassifier
+#for all the data together:
+    #it throws away all samples whose scores are within the standard deviation distance from the mean of the scores
+    #for the sampels that were left, all those with scores above the mean it defines as 1, and the rest 0
+
 
 def build_RF(traindata_filename):
     data = list()
@@ -97,6 +103,12 @@ def build_RF_for_celline(traindata_filename,skip = False):
 
     return rfClf 
 
+#Loads the data to test for regression
+#for each cell line:
+    #it throws away all samples whose scores are within the standard deviation distance from the mean of the scores
+#Combines the results for all the cellines
+#If genes is a list of genes, it loads only the sampels related to those genes
+
 def load_data(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
@@ -144,6 +156,12 @@ def load_data(traindata_filename,genes = None):
     print("---finished building data set---")
     return data,lbls
 
+#Loads data for classifier
+#for each cell line:
+    #it throws away all samples whose scores are within the standard deviation distance from the mean of the scores
+    #for the sampels that were left, all those with scores above the mean it defines as 1, and the rest 0
+#Combines the results for all the cellines
+#If genes is a list of genes, it loads only the sampels related to those genes
 def load_data_clf(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
@@ -191,7 +209,12 @@ def load_data_clf(traindata_filename,genes = None):
     print("---finished building data set---")
     return data,lbls
 
-
+#Builds RF to test classifier
+#for each cell line:
+    #it throws away all samples whose scores are within the standard deviation distance from the mean of the scores
+    #for the sampels that were left, all those with scores above the mean it defines as 1, and the rest 0
+#Combines the results for all the cellines
+#If genes is a list of genes, it loads only the sampels related to those genes
 def build_RF2(traindata_filename, genes = None):
     data_dict = dict()
     lbls_dict = dict()
@@ -245,7 +268,11 @@ def build_RF2(traindata_filename, genes = None):
 
     return rfClf  # , svmClf
 
-
+#Builds RF to test classifier
+#for each cell line:
+    #for the sampels, all those with scores above the mean it defines as 1, and the rest 0
+#Combines the results for all the cellines
+#If genes is a list of genes, it loads only the sampels related to those genes
 def build_RF3(traindata_filename,genes = None):
     data_dict = dict()
     lbls_dict = dict()
@@ -297,7 +324,7 @@ def build_RF3(traindata_filename,genes = None):
 
 
 
-
+#Tests and compares the RandomForestClassifier's roc for real data, and shuffeled ontotype data
 def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num_of_shuffles = 10 ):
     original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
     or_fprs,or_tprs,or_auc = original_clf.ROC()
@@ -335,7 +362,7 @@ def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num
     plt.savefig("graph_results/ROC")
     plt.show()
    
-        
+#Compares the RandomForestRegressor's squared distance of prediction from real labels, for real data, and shuffeled ontotype data
 def compare_to_random_reg(file_name, loader = load_data, genes_list = None ,num_of_shuffles = 10):
     dt,lb = loader("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
     rf = RF_TESTS(dt,lb)
