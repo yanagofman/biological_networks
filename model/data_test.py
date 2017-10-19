@@ -60,7 +60,7 @@ def build_RF(traindata_filename):
 
 
 
-def build_RF_for_celline(traindata_filename,skip = False):
+def build_RF_for_celline(traindata_filename,skip = True,genes = None):
     data = list()
     lbls = np.array([])
 
@@ -71,6 +71,8 @@ def build_RF_for_celline(traindata_filename,skip = False):
         for row in reader:
             if not first_line:
                 first_line = True
+                continue
+            if genes != None and not(row[1] in genes):
                 continue
             j+=1
             if skip and j == 2:
@@ -93,6 +95,10 @@ def build_RF_for_celline(traindata_filename,skip = False):
 
     lbls[lbls > tresh1] = 1
     lbls[lbls <= tresh2] = 0
+    a = list(range(len(lbls)))
+    np.random.shuffle(a)
+    lbls = lbls[a]
+    data = data[a]
 
     print("---finished building data set---")
 
@@ -155,6 +161,40 @@ def load_data(traindata_filename,genes = None):
 
     print("---finished building data set---")
     return data,lbls
+
+def load_data_celline(traindata_filename,genes = None,skip = True):
+     data = list()
+     lbls = np.array([])
+     with open(traindata_filename, newline='') as csvfile:
+         reader = csv.reader(csvfile, delimiter=',')
+         first_line = False
+         j = 0
+         for row in reader:
+             if not first_line:
+                 first_line = True
+                 continue
+             if genes != None and not(row[1] in genes):
+                continue
+             j+=1
+             if skip and j == 2:
+                 continue
+             lbls = np.append(lbls, float(row[1]))
+             vec = np.array(row[2:])
+             vec[vec == ''] = '0'
+             data.append(vec.astype(int))
+     print("---finished reading data file---")
+     data = np.array(data)
+     tresh1 = np.average(lbls) + np.sqrt(np.var(lbls))
+     tresh2 = np.average(lbls) - np.sqrt(np.var(lbls))
+     data1 = data[lbls > tresh1]
+     data2 = data[lbls <= tresh2]
+     lbls1 = lbls[lbls > tresh1]
+     lbls2 = lbls[lbls <= tresh2]
+     lbls = np.append(lbls1, lbls2)
+     data = np.append(data1, data2, axis=0)
+     
+     print("---finished building data set---")
+     return data, lbls
 
 #Loads data for classifier
 #for each cell line:
