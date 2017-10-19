@@ -17,7 +17,6 @@ class RF_TESTS(object):
     # Runs the classifier with cross validation over num_of_folds folds of the data given on __init__
     #For each run, gets the roc results over test_data, and returns the roc result of all the runs together
     def clf_roc(self, num_of_folds=5):
-        sizes = sorted(sizes)
         plt.figure(1)
         plt.subplot(211)
         plt.ylim(0, 1)
@@ -26,20 +25,17 @@ class RF_TESTS(object):
         plt.xlabel("False Positive Rate")
         plt.plot([0, 1], [0, 1], 'r-')
         clf = RandomForestClassifier(n_jobs = -1)
-        indexes = list(range(self.size))
         dat = dict()
         kf = KFold(n = self.size, n_folds = num_of_folds)
         for train_index,test_index  in kf:
-            for j in range(n):
-                np.random.shuffle(indexes)
-                clf.fit(self.dt[train_index], self.lbs[train_index])
-                testLbs = self.lbs[test_index]
-                testPre = clf.predict(self.dt[test_index])
-                fpr, tpr, thresh = roc_curve(testLbs, testPre, pos_label=1)
-                if fpr[1] in dat:
-                    dat[fpr[1]] += [tpr[1], 1]
-                else:
-                    dat[fpr[1]] = np.array([tpr[1], 1])
+            clf.fit(self.dt[train_index], self.lbs[train_index])
+            testLbs = self.lbs[test_index]
+            testPre = clf.predict(self.dt[test_index])
+            fpr, tpr, thresh = roc_curve(testLbs, testPre, pos_label=1)
+            if fpr[1] in dat:
+                dat[fpr[1]] += [tpr[1], 1]
+            else:
+                dat[fpr[1]] = np.array([tpr[1], 1])
         fprs = sorted(list(dat.keys()))
         tprs = []
         for i in range(len(fprs)):
