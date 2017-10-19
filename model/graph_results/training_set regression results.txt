@@ -1,3 +1,5 @@
 average squared distance of regression's prediction on test data from the real scores:
 	real data:	33490.9
 	shuffled data: 35732.96
+test data size = 15313
+tain data size = 30627

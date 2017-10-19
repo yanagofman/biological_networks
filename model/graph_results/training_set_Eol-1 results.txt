@@ -1,0 +1,9 @@
+average squared distance of regression's prediction on test data from the real scores:
+	real data:	2765.91
+	shuffled data: 3326.68
+
+
+test data size = 1097
+train data size = 2195
+
+ROC: no postive results from classifier on test data, couldn't build graph
