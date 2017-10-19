@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from collections import namedtuple
 
-from fetch_data.gene_entries import GeneEntries
+from data.gene_entries import GeneEntries
 from ontotype.ontotype import Ontotype
 from strings import CELL_LINE, DEFECTIVE_GENE, CS_SCORE
 from utils import similar, clean_up
@@ -173,17 +173,26 @@ class BuildTrainingSet(object):
                                                             cell_lines, reader, f, single_csv)
 
 
+def run(gene_input_path, fetched_data_path, initialization_map_file_name, training_set_path, gene_name_to_id_path,
+        single_csv, should_shuffle):
+    build_training_set_obj = BuildTrainingSet(initialization_map_file_name, gene_name_to_id_path, should_shuffle)
+    build_training_set_obj.build_training_set(gene_input_path, fetched_data_path, training_set_path, single_csv)
+
+
 def main(gene_input_path, fetched_data_path, initialization_map_file_name, training_set_path, gene_name_to_id_path,
-         single_csv=False, number_of_iterations=11):
+         number_of_iterations=4, only_single_csv=False):
+    single_csv_values = [True]
+    if not only_single_csv:
+        single_csv_values.append(False)
     for i in range(number_of_iterations):
         should_shuffle = bool(i)
         new_training_set_path = get_file_name_for_param(training_set_path, "shuffle_%s" % i if i else "no_shuffle",
                                                         is_folder=True)
-        build_training_set_obj = BuildTrainingSet(initialization_map_file_name, gene_name_to_id_path, should_shuffle)
-        build_training_set_obj.build_training_set(gene_input_path, fetched_data_path, new_training_set_path, single_csv)
+        for single_csv in single_csv_values:
+            run(gene_input_path, fetched_data_path, initialization_map_file_name, new_training_set_path,
+                gene_name_to_id_path, single_csv, should_shuffle)
 
 if __name__ == '__main__':
-    for single_csv in [False, True]:
-        main("./genes_input.csv", "../fetch_data/data.json", "../ontotype/initialization_map.pkl",
-             "./training_set_files/training_set.csv", "../fetch_data/gene_name_to_id_mapping.json",
-             single_csv=single_csv)
+    main("./2000_genes_input.csv", "../data/data.json", "../ontotype/initialization_map.pkl",
+         "./training_set_files_2000_genes/training_set.csv", "../data/gene_name_to_id_mapping.json",
+         number_of_iterations=4, only_single_csv=True)

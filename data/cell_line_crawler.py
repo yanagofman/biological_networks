@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from fetch_data.gene_entries import GeneEntries
+from data.gene_entries import GeneEntries
 from utils import similar
 
 NUM_OF_RESULTS_RE = re.compile("\s(\d+)\sentries")
