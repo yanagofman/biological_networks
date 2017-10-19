@@ -298,10 +298,11 @@ def build_RF2(traindata_filename, genes = None):
             data = np.append(data, np.append(data1, data2, axis=0), axis=0)
         else:
             data = np.append(data1, data2, axis=0)
-
+            
     print("---finished building data set---")
-
-    rfClf = RF_TESTS(data, lbls)
+    a = list(range(len(lbls)))
+    np.random.shuffle(a)
+    rfClf = RF_TESTS(data[a], lbls[a])
     print("---finished building classifiers---")
    # pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
