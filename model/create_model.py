@@ -16,7 +16,7 @@ class RF_TESTS(object):
 
     # Runs the classifier with cross validation over num_of_folds folds of the data given on __init__
     #For each run, gets the roc results over test_data, and returns the roc result of all the runs together
-    def clf_roc(self, num_of_folds=5):
+    def clf_roc(self, num_of_folds=10):
         plt.figure(1)
         plt.subplot(211)
         plt.ylim(0, 1)

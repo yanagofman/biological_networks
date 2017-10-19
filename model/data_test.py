@@ -51,7 +51,7 @@ def build_RF(traindata_filename):
 
     print("---finished building data set---")
 
-    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls)
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -96,7 +96,7 @@ def build_RF_for_celline(traindata_filename,skip = False):
 
     print("---finished building data set---")
 
-    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls )
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -261,7 +261,7 @@ def build_RF2(traindata_filename, genes = None):
 
     print("---finished building data set---")
 
-    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls)
     print("---finished building classifiers---")
    # pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -313,7 +313,7 @@ def build_RF3(traindata_filename,genes = None):
 
     print("---finished building data set---")
 
-    rfClf = RF_TESTS(data, lbls, int(0.9 * len(data)))
+    rfClf = RF_TESTS(data, lbls)
     print("---finished building classifiers---")
     #pkl.dump(rfClf, open('random_forest_classifier.p', 'wb'))
     print("---done---")
@@ -327,19 +327,19 @@ def build_RF3(traindata_filename,genes = None):
 #Tests and compares the RandomForestClassifier's roc for real data, and shuffeled ontotype data
 def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num_of_shuffles = 10 ):
     original_clf = builder("training_set_files/no_shuffle/"+file_name+".csv",genes = genes_list)
-    or_fprs,or_tprs,or_auc = original_clf.ROC()
+    or_fprs,or_tprs,or_auc = original_clf.clf_roc()
     rand_roc = dict()
     rocs = []
     for i in range(1,num_of_shuffles+1):
         print("---",i,"---")
         clf = builder("training_set_files/shuffle_"+str(i)+"/"+file_name+".csv",genes = genes_list)
-        fprs,tprs,t_auc = clf.ROC()
+        fprs,tprs,t_auc = clf.clf_roc()
         rocs+=[(fprs,tprs,t_auc)]
-        for i in range(len(fprs)):
-            if(fprs[i] in rand_roc):
-                rand_roc[fprs[i]] += [tprs[i],1]
+        for j in range(len(fprs)):
+            if(fprs[j] in rand_roc):
+                rand_roc[fprs[j]] += [tprs[j],1]
             else:
-                rand_roc[fprs[i]] = np.array([tprs[i],1])
+                rand_roc[fprs[j]] = np.array([tprs[j],1])
     ran_fprs = sorted(list(rand_roc.keys()))
     ran_tprs = []
     for i in range(len(ran_fprs)):
@@ -359,7 +359,7 @@ def compare_to_random_roc(file_name, builder = build_RF2, genes_list = None, num
     legend+=[ran_roc]
     plt.legend(handles=legend)
     plt.legend(bbox_to_anchor=(0, -0.95), loc=2, borderaxespad=0.)
-    plt.savefig("graph_results/ROC")
+    plt.savefig("graph_results/ROC -"+file_name+".png")
     plt.show()
    
 #Compares the RandomForestRegressor's squared distance of prediction from real labels, for real data, and shuffeled ontotype data
