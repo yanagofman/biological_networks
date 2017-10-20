@@ -1,0 +1,7 @@
+average squared distance of regression's prediction on test data from the real scores:
+	real data:	1869.15
+	shuffled data: 1919.25
+
+test data size = 2870
+train data size = 5740
+
